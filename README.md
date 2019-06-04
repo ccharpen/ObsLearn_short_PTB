@@ -1,4 +1,4 @@
-# Observational learning task - short version using Psychtoolbox
+# Observational learning task - short version
 Psychtoolbox version of Observational Learning task (short version for computational psychiatry battery).
 The tasks has an instruction phase, self-paced, followed by 2 task blocks of about 7 minutes each
 
