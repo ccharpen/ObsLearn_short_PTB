@@ -1,4 +1,4 @@
-function ioStruct = initIOStruct()
+function ioStruct = initIOStruct(taskStruct)
     % hide input to prevent participant from over-writing into the script
 %     HideCursor(); 
     ListenChar(2);
@@ -13,7 +13,7 @@ function ioStruct = initIOStruct()
     debugWinSize = [0,0,1000,800];
     fullWinSize = [];
     % run full-screen task
-    [ioStruct.wPtr, ioStruct.wPtrRect] = Screen('OpenWindow', 0, ioStruct.bgColor, debugWinSize);
+    [ioStruct.wPtr, ioStruct.wPtrRect] = Screen('OpenWindow', 2, ioStruct.bgColor, debugWinSize);
     % activate for alpha blending
     Screen('BlendFunction', ioStruct.wPtr, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     
@@ -29,20 +29,34 @@ function ioStruct = initIOStruct()
     DrawFormattedText(ioStruct.wPtr, 'Loading...', 'center', 'center', [], 70, false, false, 1.1);
     Screen(ioStruct.wPtr, 'Flip');
     
+    % build list of jittered duration
+    jit_iti = [randperm(76)' repmat((1:4)',19,1)];
+    jit_iti = sortrows(jit_iti,1);
+    
+    jit_fixobs = [randperm(56)' repmat((1:4)',14,1)];
+    jit_fixobs = sortrows(jit_fixobs,1);
+    
     % stimulus durations
     ioStruct.SLOW = -1;
     ioStruct.MAX_RT = 4;
-    ioStruct.FIX_DURATION = 3;
+    ioStruct.FIX_DURATION = jit_iti(:,2);
     ioStruct.OBSPLAY_DURATION = 1;
     ioStruct.SM_OBS_DURATION = 2;
+    ioStruct.FIXOBS_DURATION = jit_fixobs(:,2);
     ioStruct.CHOICE_FB_DURATION = 0.5;
-    ioStruct.TOKEN_DURATION = 2;
-    ioStruct.MISSED_DURATION = 2.5;
+    ioStruct.TOKEN_DURATION = 1;
+    ioStruct.MISSED_DURATION = 1.5;
     
     % response keys
-    ioStruct.respKey_1 = KbName('LeftArrow');
-    ioStruct.respKey_2 = KbName('DownArrow');
-    ioStruct.respKey_3 = KbName('RightArrow');
+    if taskStruct.session == 1 || taskStruct.session == 3
+        ioStruct.respKey_1 = KbName('LeftArrow');
+        ioStruct.respKey_2 = KbName('DownArrow');
+        ioStruct.respKey_3 = KbName('RightArrow');
+    elseif taskStruct.session == 2 %MRI
+        ioStruct.respKey_1 = KbName('1');
+        ioStruct.respKey_2 = KbName('2');
+        ioStruct.respKey_3 = KbName('3');
+    end
     
     % task control keys
     ioStruct.respKey_Quit = KbName('Q');

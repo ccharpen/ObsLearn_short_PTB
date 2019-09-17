@@ -1,4 +1,4 @@
-function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
+function trialSpec = runTrial(ioStruct, trialSpec, task_start_time, tnf, tO)
     %trialSpec is the trial list; for the OL task, it's a table with the
     %following columns:
     %1: run number
@@ -15,15 +15,23 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
     %12: horizontal order
     
     % only allow relevant keys
-    RestrictKeysForKbCheck( [ioStruct.respKey_1, ioStruct.respKey_2, ioStruct.respKey_3] );
+    if trialSpec.unavAct == 1
+        RestrictKeysForKbCheck( [ioStruct.respKey_2, ioStruct.respKey_3] );
+    elseif trialSpec.unavAct == 2
+        RestrictKeysForKbCheck( [ioStruct.respKey_1, ioStruct.respKey_3] );
+    elseif trialSpec.unavAct == 3
+        RestrictKeysForKbCheck( [ioStruct.respKey_1, ioStruct.respKey_2] );
+    end
     
     % fixation cross to start trial
     startTime = GetSecs();
     Screen('TextSize', ioStruct.wPtr, 40); 
     Screen('TextColor', ioStruct.wPtr, ioStruct.textColor);
-    DrawFormattedText(ioStruct.wPtr, '+', 'center', 'center');
-    [~, onset] = Screen(ioStruct.wPtr, 'Flip', 0);
-    trialSpec.tFixOn = onset - task_start_time;
+    if trialSpec.trialNb ~= 1 %only show ITI fixation on first trial
+        DrawFormattedText(ioStruct.wPtr, '+', 'center', 'center');
+        [~, onset] = Screen(ioStruct.wPtr, 'Flip', 0);
+        trialSpec.tFixOn = onset - task_start_time;
+    end
     
     %print observe or play to indicate trial type
     if trialSpec.trType == 1 %observe trial
@@ -32,7 +40,15 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
         trtype_text = 'Play';
     end
     DrawFormattedText(ioStruct.wPtr, trtype_text, 'center', 'center');
-    [~, onset_trtype] = Screen(ioStruct.wPtr, 'Flip', startTime + ioStruct.FIX_DURATION, 1);
+    if trialSpec.trialNb ~= 1 %only show ITI fixation on first trial
+        if tnf ~= 0
+            [~, onset_trtype] = Screen(ioStruct.wPtr, 'Flip', startTime + ioStruct.FIX_DURATION(tnf), 1); %jitter
+        else
+            [~, onset_trtype] = Screen(ioStruct.wPtr, 'Flip', startTime + 3, 1); %no jitter (practice)
+        end
+    else %show trType onset at t=0
+        [~, onset_trtype] = Screen(ioStruct.wPtr, 'Flip', startTime, 1);
+    end
     trialSpec.tTrTypeOn = onset_trtype - task_start_time;
     
     %determine which slot machines to draw where
@@ -76,9 +92,23 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
         end
         [~, onset_sm] = Screen(ioStruct.wPtr, 'Flip', onset_trtype + ioStruct.OBSPLAY_DURATION, 1);
         trialSpec.tSMOn = onset_sm - task_start_time;
-        % clear the screen after required duration, before playing video
+        % clear the screen after required duration
         Screen(ioStruct.wPtr, 'Flip', onset_sm + ioStruct.SM_OBS_DURATION);
         
+        % show fixation cross before video
+        Screen('FrameRect', ioStruct.wPtr, ioStruct.textColor, ioStruct.TopBox);
+        Screen('FrameRect', ioStruct.wPtr, ioStruct.textColor, ioStruct.BottomBox);
+        DrawFormattedText(ioStruct.wPtr, '+', 'center', ioStruct.centerY - 120);
+        [~, onset_fixobs] = Screen(ioStruct.wPtr, 'Flip', onset_sm + ioStruct.SM_OBS_DURATION, 1); 
+        trialSpec.tFixObsOn = onset_fixobs - task_start_time;
+        
+        % clear the screen after required duration, before playing video
+        if tO ~= 0
+            Screen(ioStruct.wPtr, 'Flip', onset_fixobs + ioStruct.FIXOBS_DURATION(tO)); %jitter
+        else 
+            Screen(ioStruct.wPtr, 'Flip', onset_fixobs + 1); %no jitter (practice)
+        end
+    
         % determine which video to show
         trialSpec.video_nb = randi(5);
         if trialSpec.corrAct == 1 %left action
@@ -144,11 +174,6 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
             
             return;
         
-%         elseif length(pressedKey) > 1
-%             % mulitple responses made
-%             trialSpec = showMultiResp(ioStruct, trialSpec);
-%             return;
-            
         else
             % capture selected option
             if ismember(pressedKey(end), ioStruct.respKey_1)
@@ -198,6 +223,12 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
             [~, onset_chfb] = Screen(ioStruct.wPtr, 'Flip', 0);
             trialSpec.tChFbOn = onset_chfb - task_start_time;
             
+            % show fixation cross for 4s - RT
+            DrawFormattedText(ioStruct.wPtr, '+', 'center', 'center');
+            [~, onset_fixplay] = Screen(ioStruct.wPtr, 'Flip', onset_chfb + ioStruct.CHOICE_FB_DURATION, 0); 
+            trialSpec.tFixPlayOn = onset_fixplay - task_start_time;
+            dur_fix = ioStruct.MAX_RT - trialSpec.choiceRT;
+            
             % show token
             if trialSpec.choice == 1
                 trialSpec.tokenShown = trialSpec.tokenIfLeft;
@@ -214,25 +245,12 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time)
                 trialSpec.outcome = 0;
             end
             Screen('DrawTexture', ioStruct.wPtr, ioStruct.token(trialSpec.tokenShown), [], ioStruct.TokenBox);
-            [~, onset_tok] = Screen(ioStruct.wPtr, 'Flip', onset_chfb + ioStruct.CHOICE_FB_DURATION, 1);
+            [~, onset_tok] = Screen(ioStruct.wPtr, 'Flip', onset_fixplay + dur_fix, 0);
             trialSpec.tTokOn = onset_tok - task_start_time;
+            
             % clear the screen after required duration
             Screen(ioStruct.wPtr, 'Flip', onset_tok + ioStruct.TOKEN_DURATION);
         
         end
     end
 end
-
-% function trialSpec = showMultiResp(ioStruct, trialSpec)
-%     % clear the screen
-%     Screen(ioStruct.wPtr, 'Flip');
-%     % show error text
-%     slowText = 'Multiple responses detected!\n\n Please select only a single option';
-%     Screen('TextSize', ioStruct.wPtr, 30);
-%     Screen('TextColor', ioStruct.wPtr, [255 0 0]);
-%     Screen('TextFont', ioStruct.wPtr, 'Helvetica');
-%     DrawFormattedText(ioStruct.wPtr, slowText, 'center', 'center');
-%     % show feedback for prescribed time, then clear screen
-%     [~, trialSpec.tFBOn] = Screen(ioStruct.wPtr, 'Flip');
-%     [~, trialSpec.tFBOff] = Screen(ioStruct.wPtr, 'Flip', GetSecs() + ioStruct.REW_DURATION);
-% end

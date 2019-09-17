@@ -3,7 +3,7 @@ function [] = showInstructions(ioStruct, instrDir)
 
     % load task instruction images
     ioStruct.instructions = nan(length(instrFiles),1);
-    for iI = 1 : length(ioStruct.instructions)
+    for iI = 1 : length(ioStruct.instructions) %do not show last instruction slide (keep for after practice)
         ioStruct.instructions(iI) = Screen('MakeTexture', ioStruct.wPtr, imread(fullfile(instrDir, instrFiles(iI).name)));
     end
     
@@ -23,13 +23,13 @@ function [] = showInstructions(ioStruct, instrDir)
         
     % initialize the instruction display
     instructionWidth = 1000;
-    instructionHeight = 700;
+    instructionHeight = 750;
     leftX = ioStruct.centerX - round((instructionWidth/2));
     topY = ioStruct.centerY - round((instructionHeight/2));
     ioStruct.instructionRect = [leftX, topY, leftX+instructionWidth, topY+instructionHeight];
     
     % list of instructions to show
-    instructions = 1:size(ioStruct.instructions);
+    instructions = 1:(size(ioStruct.instructions));
     % init the current instruction
     currentInst = 1;
 
