@@ -1,6 +1,7 @@
 # Observational learning task - short version
 Psychtoolbox version of Observational Learning task (short version for computational psychiatry battery).
-The task has an instruction phase, self-paced, followed by 2 task blocks of about 7 minutes each
+The task has an instruction phase, self-paced, followed by the task split into 8 short blocks (5s break in between blocks).
+Once task starts, total timing (including jitters) is fixed to 13min45s.
 
 ### Dependencies
 - The task run under Matlab with Psychtoolbox-3 (http://psychtoolbox.org/overview.html).
