@@ -59,17 +59,17 @@ function trialSpec = runTrial(ioStruct, trialSpec, task_start_time, tnf, tO)
     end
     VOF = ['VO' num2str(trialSpec.vertOrd)];
     if trialSpec.horizOrd == 1 %horizontal order 1
-        left_ind = 1;
-        mid_ind = 2;
-        right_ind = 3;
+        left_ind = 1; %green
+        mid_ind = 2; %red
+        right_ind = 3; %blue
     elseif trialSpec.horizOrd == 2 %horizontal order 2
-        left_ind = 2;
-        mid_ind = 3;
-        right_ind = 1;
+        left_ind = 2; %red
+        mid_ind = 3; %blue
+        right_ind = 1; %green
     elseif trialSpec.horizOrd == 3 %horizontal order 3
-        left_ind = 3;
-        mid_ind = 1;
-        right_ind = 2;
+        left_ind = 3; %blue
+        mid_ind = 1; %green
+        right_ind = 2; %red
     end
     
     if trialSpec.trType == 1 %observe trial
